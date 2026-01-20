@@ -1,0 +1,19 @@
+[theme]
+base = "light"
+primaryColor = "#0E35E6"               # deep blue accent
+backgroundColor = "#F8FAFC"            # soft white background
+secondaryBackgroundColor = "#E5E8EB"   # light neutral for panels
+textColor = "#1E293B"                  # dark slate for text
+font = "sans serif"
+
+[server]
+headless = true
+enableCORS = false
+enableXsrfProtection = false
+
+[browser]
+gatherUsageStats = false
+
+[client]
+toolbarMode = "minimal"
+showErrorDetails = false
