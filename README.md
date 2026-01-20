@@ -138,10 +138,16 @@ API_BASE_URL=http://localhost:8000
 
 ---
 
-## Run with Docker Compose (Recommended)
+## Run with Docker Compose 
 
 ```bash
 docker-compose up --build
+```
+
+or 
+
+```bash
+./deploy.sh
 ```
 
 Open:
@@ -150,7 +156,7 @@ Open:
 
 ---
 
-## Run Without Docker (Manual)
+## Run Without Docker 
 
 ### Backend
 ```bash
