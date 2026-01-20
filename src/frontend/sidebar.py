@@ -54,7 +54,7 @@ def display_sidebar():
         st.session_state.summary_results = {}
 
     if documents:
-        selected_doc_ids = st.sidebar.multiselect(
+        selected_doc_ids = st.sidebar.select(
             "Select documents to summarize",
             options=[doc["id"] for doc in documents],
             format_func=lambda x: next(doc["filename"] for doc in documents if doc["id"] == x)
@@ -62,7 +62,7 @@ def display_sidebar():
 
         if st.sidebar.button("Summarize Uploaded Documents.."):
             if not selected_doc_ids:
-                st.sidebar.warning("Please select at least one document.")
+                st.sidebar.warning("Please select a document.")
             else:
                 with st.spinner("Summarizing..."):
                     summary_response = summarize_documents(selected_doc_ids)  # pass list

@@ -82,7 +82,19 @@ def get_summarization_chain(model="gpt-4o-mini"):
     print("Summarization prompt variables:", summarization_prompt.input_variables)
     return LLMChain(llm=llm, prompt=summarization_prompt)
 
+def get_field_extraction_chain(model="gpt-4o-mini"):
+    llm = ChatOpenAI(model=model, temperature=0)
 
+    prompt = ChatPromptTemplate.from_messages([
+        ("system",
+         "You are an intelligent form understanding agent.\n"
+         "Extract the form sections/field groups present.\n"
+         "Return ONLY JSON list of strings.\n"
+         "Example: [\"Personal Info\", \"Address\", \"Payment Details\"]"),
+        ("human", "{context}")
+    ])
+
+    return prompt | llm
 
 # import os
 # import yaml 

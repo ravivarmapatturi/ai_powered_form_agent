@@ -119,6 +119,7 @@ def display_chat_interface():
         with st.spinner("Generating response..."):
             response = get_api_response(prompt, st.session_state.session_id, model='gpt-4o-mini')
             
+            
             if response:
                 st.session_state.session_id = response.get('session_id')
                 st.session_state.messages.append({"role": "assistant", "content": response['answer']})
@@ -127,8 +128,8 @@ def display_chat_interface():
                     st.markdown(response['answer'])
                     
                     with st.expander("Details"):
-                        st.subheader("Generated Answer")
-                        st.code(response['answer'])
+                        st.subheader("Sources Used")
+                        st.code(response['sources'])
                         st.subheader("Model Used")
                         st.code(response['model'])
                         st.subheader("Session ID")

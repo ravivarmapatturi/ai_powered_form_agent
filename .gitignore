@@ -1,15 +1,15 @@
 # secrets
 .env
-backend/.env
-frontend/.env
+src/backend/.env
+src/frontend/.env
 
 # python
 __pycache__/
 *.pyc
 
 # chroma + sqlite (optional)
-backend/chroma_db/
-backend/rag_app.db
+src/backend/chroma_db/
+src/backend/rag_app.db
 
 # logs
 *.log

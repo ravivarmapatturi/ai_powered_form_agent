@@ -1,13 +1,16 @@
 from fastapi import FastAPI, File, UploadFile,HTTPException
 from data_validation_utils import QueryInput,QueryResponse, DocumentInfo ,DeleteFileRequest
-from query_translation_utils import get_rag_chain
-from vector_db_utils import index_document_to_chroma,delete_doc_from_chroma
+from query_translation_utils import get_rag_chain, get_summarization_chain , get_field_extraction_chain
+from vector_db_utils import index_document_to_chroma,delete_doc_from_chroma,get_relevant_chunks_from_chroma
 from db_utils import insert_application_logs,get_chat_history,get_all_documents,insert_document_record,delete_document_record
 import optparse
 import uuid
 import logging
 import shutil
 import os
+from fastapi import Body
+import json 
+
 logging.basicConfig(filename='app.log',level=logging.INFO)
 
 app=FastAPI()
@@ -27,14 +30,41 @@ def chat(query_input: QueryInput):
 
     chat_history = get_chat_history(session_id)
     rag_chain = get_rag_chain(query_input.model.value)
-    answer = rag_chain.invoke({
+    result = rag_chain.invoke({
         "input": query_input.question,
         "chat_history": chat_history
-    })['answer']
+    })
+
+    answer = result["answer"]
     
+
+
+    
+    # insert_application_logs(session_id, query_input.question, answer, query_input.model.value)
+    # logging.info(f"Session ID: {session_id}, AI Response: {answer}")
+    # return QueryResponse(answer=answer, session_id=session_id, model=query_input.model)
+    
+    source_docs = result.get("context", [])  # context contains retrieved docs
+
+    sources = []
+    for d in source_docs:
+        meta = d.metadata or {}
+        sources.append({
+            "source": meta.get("source"),
+            "page_number": meta.get("page_number") or meta.get("page"),
+            "chunk_preview": d.page_content[:300]  # small preview
+        })
+
+
     insert_application_logs(session_id, query_input.question, answer, query_input.model.value)
     logging.info(f"Session ID: {session_id}, AI Response: {answer}")
-    return QueryResponse(answer=answer, session_id=session_id, model=query_input.model)
+
+    return QueryResponse(
+        answer=answer,
+        session_id=session_id,
+        model=query_input.model.value,
+        sources=sources
+    )
 
 
 @app.post("/upload-doc")
@@ -83,53 +113,88 @@ def delete_document(request: DeleteFileRequest):
     else:
         return {"error": f"Failed to delete document with file_id {request.file_id} from Chroma."}
 
-from fastapi import Body
-from query_translation_utils import get_summarization_chain
-from vector_db_utils import get_relevant_chunks_from_chroma
 
 @app.post("/summarize-docs")
 def summarize_documents(payload: dict = Body(...)):
-    """
-    payload:
-    {
-      "file_ids": [1,2,3],
-      "model": "gpt-4o-mini"
-    }
-    """
+
     file_ids = payload.get("file_ids", [])
-    print("Received file_ids for summarization:", file_ids)
     model = payload.get("model", "gpt-4o-mini")
 
     if not file_ids:
         raise HTTPException(status_code=400, detail="file_ids is required")
 
-    chain = get_summarization_chain(model=model)
+    summary_chain = get_summarization_chain(model=model)
+    field_chain = get_field_extraction_chain(model=model)
 
-    summaries = []
+    results = []
+
     for file_id in file_ids:
-        summary_query = (
-            "Extract key form details like names, dates, IDs, totals, addresses, phone/email, "
-            "important instructions, and missing fields."
-        )
 
-        docs = get_relevant_chunks_from_chroma(summary_query, file_id=file_id, k=10)
+        # 1) Get broad context from the document
+        seed_query = "Give all major sections and fields present in this form."
+        seed_docs = get_relevant_chunks_from_chroma(seed_query, file_id=file_id, k=25)
 
-        if not docs:
-            summaries.append({
-                "file_id": file_id,
-                "summary": "No content found for summarization."
-            })
+        if not seed_docs:
+            results.append({"file_id": file_id, "summary": "No content found."})
             continue
 
-        context = "\n\n".join([d.page_content for d in docs])
-        summary = chain.run({"context": context})
+        seed_context = "\n\n".join([d.page_content for d in seed_docs])
 
-        summaries.append({
-            "file_id": file_id,
-            "summary": summary
+        # 2) Extract sections/field groups (LLM)
+        raw_fields = field_chain.invoke({"context": seed_context}).content
+
+        try:
+            fields = json.loads(raw_fields)
+            if not isinstance(fields, list):
+                fields = []
+        except:
+            fields = []
+
+        if not fields:
+            fields = ["General Form Details"]  # fallback
+
+        # 3) Summarize each field/section separately
+        section_summaries = []
+        for field_name in fields:
+            docs = get_relevant_chunks_from_chroma(
+                query=f"Extract details for section: {field_name}",
+                file_id=file_id,
+                k=10
+            )
+
+            if not docs:
+                continue
+
+            context = "\n\n".join([d.page_content for d in docs])
+
+            section_summary = summary_chain.invoke({
+                "context": context
+            })
+
+            # if your chain returns dict or string handle both
+            if isinstance(section_summary, dict):
+                section_summary = section_summary.get("text") or section_summary.get("output_text") or str(section_summary)
+
+            section_summaries.append(f"### {field_name}\n{section_summary}")
+
+        # 4) Final merged summary (1 per document)
+        final_context = "\n\n".join(section_summaries)
+
+        final_summary = summary_chain.invoke({
+            "context": final_context
         })
 
-    return {"summaries": summaries}
+        if isinstance(final_summary, dict):
+            final_summary = final_summary.get("text") or final_summary.get("output_text") or str(final_summary)
+
+        results.append({
+            "file_id": file_id,
+            "summary": final_summary,
+            "sections_found": fields,
+            "section_summaries": section_summaries
+        })
+
+    return {"summaries": results}
 
 
 from fastapi import Body, HTTPException

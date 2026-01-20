@@ -1,7 +1,8 @@
 import requests
 import streamlit as st
 import os
-API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000").rstrip("/")
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost/api").rstrip("/")
+
 
 def get_api_response(question, session_id, model):
     headers = {

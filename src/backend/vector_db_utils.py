@@ -73,3 +73,5 @@ def get_relevant_chunks_from_chroma(query: str, file_id: int, k: int = 8):
     except Exception as e:
         print(f"Error retrieving chunks from Chroma: {e}")
         return []
+
+

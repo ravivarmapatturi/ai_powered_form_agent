@@ -20,3 +20,4 @@ dill
 regex
 overrides
 wrapt
+pymupdf
