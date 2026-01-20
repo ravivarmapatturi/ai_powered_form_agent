@@ -1,6 +1,8 @@
 # AI Powered Form Agent
 
-This is a small end-to-end demo app that can **upload forms**, **extract information**, and **answer questions** from them.
+This is a end-to-end working prototype that can **upload forms**, **extract information**, and **answer questions** from them.
+
+Live Demo: http://34.202.126.236/
 
 It supports:
 - **QA Chat (RAG)** over uploaded forms
