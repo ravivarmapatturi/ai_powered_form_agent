@@ -143,7 +143,7 @@ API_BASE_URL=http://localhost:8000
 ## Run with Docker Compose 
 
 ```bash
-docker-compose up --build
+docker compose up --build -d
 ```
 
 or 
