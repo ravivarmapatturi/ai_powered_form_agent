@@ -3,6 +3,11 @@ from data_validation_utils import QueryInput,QueryResponse, DocumentInfo ,Delete
 from query_translation_utils import get_rag_chain, get_summarization_chain , get_field_extraction_chain
 from vector_db_utils import index_document_to_chroma,delete_doc_from_chroma,get_relevant_chunks_from_chroma
 from db_utils import insert_application_logs,get_chat_history,get_all_documents,insert_document_record,delete_document_record
+from fastapi import Body, HTTPException
+from langchain_openai import ChatOpenAI
+from langchain.prompts import ChatPromptTemplate
+from langchain.chains import LLMChain
+from vector_db_utils import get_relevant_chunks_from_chroma
 import optparse
 import uuid
 import logging
@@ -197,11 +202,7 @@ def summarize_documents(payload: dict = Body(...)):
     return {"summaries": results}
 
 
-from fastapi import Body, HTTPException
-from langchain_openai import ChatOpenAI
-from langchain.prompts import ChatPromptTemplate
-from langchain.chains import LLMChain
-from vector_db_utils import get_relevant_chunks_from_chroma
+
 
 @app.post("/insights")
 def generate_insights(payload: dict = Body(...)):
