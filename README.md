@@ -5,7 +5,8 @@ This is a end-to-end working prototype that can **upload forms**, **extract info
 Live Demo link: http://34.202.126.236/
 
 ## Demo Video
-[▶ Watch Demo](https://github.com/ravivarmapatturi/ai_powered_form_agent/blob/main/docs/Demo.mp4)
+[▶ Watch Demo](https://raw.githubusercontent.com/ravivarmapatturi/ai_powered_form_agent/main/docs/Demo.mp4)
+
 
 It supports:
 - **QA Chat (RAG)** over uploaded forms
