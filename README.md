@@ -1,6 +1,6 @@
 # AI Powered Form Agent
 
-This is a end-to-end working prototype that can **upload forms**, **extract information**, and **answer questions** from them.
+This is a end-to-end working prototype that you can **upload forms**, **extract information**, get **answers from questions** ,**summarization**and **insights** from them.
 
 Live Demo link: http://34.202.126.236/
 
